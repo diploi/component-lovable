@@ -86,6 +86,9 @@ spec:
           volumeMounts:
             - name: nginx-config
               mountPath: /etc/nginx/conf.d
+          securityContext:
+            runAsUser: 101
+            runAsGroup: 101
         {{- end }}
       volumes:
         {{- if hasKey .Values.storage "code" }}
