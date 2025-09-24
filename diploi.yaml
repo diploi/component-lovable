@@ -1,0 +1,17 @@
+diploiVersion: v1.0
+type: component
+name: Lovable
+description: Official Diploi component for Lovable apps
+
+hosts:
+  - name: App
+    identifier: app
+    urlFormat: '[label].[default-domain]'
+
+images:
+  - identifier: app
+    prebuildImage: ghcr.io/diploi/component-lovable:[tag]
+
+environmentVariables:
+  - identifier: __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
+    defaultValue: '.diploi.me'
