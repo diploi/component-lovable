@@ -84,7 +84,7 @@ spec:
             - name: http
               containerPort: 80
           volumeMounts:
-            - name: nginx-conf
+            - name: nginx-config
               mountPath: /etc/nginx/conf.d
         {{- end }}
       volumes:
@@ -92,7 +92,7 @@ spec:
         - name: app-mount
           hostPath:
             path: {{ .Values.storage.code.hostPath }}
-        - name: nginx-conf
+        - name: nginx-config
           configMap:
-            name: nginx-conf
+            name: nginx-config
         {{- end }}
