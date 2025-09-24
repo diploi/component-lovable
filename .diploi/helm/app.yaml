@@ -86,9 +86,12 @@ spec:
           volumeMounts:
             - name: nginx-config
               mountPath: /etc/nginx/conf.d
+              readOnly: true
           securityContext:
-            runAsUser: 101
-            runAsGroup: 101
+            runAsUser: 0               # root
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
         {{- end }}
       volumes:
         {{- if hasKey .Values.storage "code" }}
