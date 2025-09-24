@@ -4,7 +4,7 @@ metadata:
   name: app
 spec:
   ports:
-    - port: {{ ternary 8080 80 (eq .Values.stage "development") }}
+    - port: 80
       name: app
   selector:
     app: app

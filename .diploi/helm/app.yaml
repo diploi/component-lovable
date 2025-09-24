@@ -51,8 +51,10 @@ spec:
         - name: app
           image: {{ .Values.images.app }}
           imagePullPolicy: Always
+          {{- if not (eq .Values.stage "development") }}
           ports:
-            - containerPort: {{ ternary 8080 80 (eq .Values.stage "development") }}
+            - containerPort: 80
+          {{- end }}
           resources:
             requests:
               memory: 500Mi
@@ -75,9 +77,22 @@ spec:
             - name: app-mount
               mountPath: /app
             {{- end }}
+        {{- if eq .Values.stage "development"}}
+        - name: nginx
+          image: nginx:1.29-alpine
+          ports:
+            - name: http
+              containerPort: 80
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+        {{- end }}
       volumes:
         {{- if hasKey .Values.storage "code" }}
         - name: app-mount
           hostPath:
             path: {{ .Values.storage.code.hostPath }}
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
         {{- end }}
