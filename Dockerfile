@@ -32,6 +32,20 @@ RUN \
   fi
 
 # Production image, copy all the built files
-FROM nginx:1.29.1-alpine AS runner
-ARG FOLDER
-COPY --from=builder ${FOLDER}/dist /usr/share/nginx/html
+# NOTE: Build will be run again in an init-container to include ENV
+FROM base AS runner
+
+COPY --from=builder --chown=1000:1000 /app /app
+WORKDIR ${FOLDER}
+
+ENV NODE_ENV=production
+
+USER 1000:1000
+
+RUN npm i -g serve
+
+EXPOSE 80
+ENV PORT=80
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["serve", "-s", "-l", "80", "dist"]

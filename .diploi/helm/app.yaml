@@ -47,6 +47,29 @@ spec:
             - name: app-mount
               mountPath: /app
       {{- end }}
+      {{- if ne .Values.stage "development"}}
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      initContainers:
+        - name: build-with-env
+          image: {{ .Values.images.app }}
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -c
+            - |
+              if [ -f yarn.lock ]; then yarn run build \
+              elif [ -f package-lock.json ]; then npm run build \
+              elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build \
+              else echo "Lockfile not found." && exit 1 \
+              fi &&
+              rm -rf /build/{*,.*} &&
+              (shopt -s dotglob; mv -v ./* /build) ||:
+          volumeMounts:
+            - name: build-mount
+              mountPath: /build
+      {{- end }}
       containers:
         - name: app
           image: {{ .Values.images.app }}
@@ -77,6 +100,10 @@ spec:
             - name: app-mount
               mountPath: /app
             {{- end }}
+            {{- if ne .Values.stage "development"}}
+            - name: build-mount
+              mountPath: /app
+            {{- end }}
         {{- if eq .Values.stage "development"}}
         - name: nginx
           image: nginx:1.29-alpine
@@ -102,3 +129,6 @@ spec:
           configMap:
             name: nginx-config
         {{- end }}
+        - name: build-mount
+          hostPath:
+            path: {{ .Values.storage.build.hostPath }}
