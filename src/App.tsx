@@ -1,27 +1,29 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
+import './App.css';
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <main>
+    <h1>This is the default Diploi Lovable component</h1>
+    <p>
+      You app has not made a production image yet. Follow these steps to see
+      your app here:
+    </p>
+    <ol>
+      <li>
+        Connect to your development deployment (Browser IDE is the easiest way
+        to do this)
+      </li>
+      <li>
+        Check the Git status. Diploi should have added a few files, like
+        Dockerfile and diploi.yaml
+      </li>
+      <li>Commit these files to your repository</li>
+      <li>
+        Check the "Actions" tab of your repository on GitHub. A new build should
+        have started.
+      </li>
+      <li>Once the build is successfull, reload this page</li>
+    </ol>
+  </main>
 );
 
 export default App;
