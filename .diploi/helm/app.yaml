@@ -48,12 +48,11 @@ spec:
               mountPath: /app
       {{- end }}
       {{- if ne .Values.stage "development"}}
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
       initContainers:
         - name: build-with-env
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
           image: {{ .Values.images.app }}
           imagePullPolicy: Always
           command:
@@ -65,8 +64,9 @@ spec:
               elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
               else echo "Lockfile not found." && exit 1; \
               fi &&
-              rm -rf /build/{*,.*} &&
-              find . -mindepth 1 -maxdepth 1 -exec mv -t /build {} +
+              find /build -mindepth 1 -exec rm -rf {} + &&
+              find . -mindepth 1 -maxdepth 1 -exec mv {} /build/ \; &&
+              chown -R 1000:1000 /build
           volumeMounts:
             - name: build-mount
               mountPath: /build
