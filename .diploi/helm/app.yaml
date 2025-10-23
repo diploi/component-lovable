@@ -48,6 +48,10 @@ spec:
               mountPath: /app
       {{- end }}
       {{- if ne .Values.stage "development"}}
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       initContainers:
         - name: build-with-env
           image: {{ .Values.images.app }}
@@ -62,8 +66,7 @@ spec:
               else echo "Lockfile not found." && exit 1; \
               fi &&
               rm -rf /build/{*,.*} &&
-              mv -v ./{*,.[!.]*} /build ||: &&
-              chown -R 1000:1000 /build
+              mv -v ./{*,.[!.]*} /build ||:
           volumeMounts:
             - name: build-mount
               mountPath: /build
