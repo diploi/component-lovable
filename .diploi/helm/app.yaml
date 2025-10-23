@@ -64,6 +64,7 @@ spec:
               elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
               else echo "Lockfile not found." && exit 1; \
               fi &&
+              chown -R 1000:1000 /build &&
               rm -rf /build/{*,.*} &&
               mv -v ./{*,.[!.]*} /build ||:
           volumeMounts:
