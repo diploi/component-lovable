@@ -130,6 +130,8 @@ spec:
           configMap:
             name: nginx-config
         {{- end }}
+        {{- if hasKey .Values.storage "build" }}
         - name: build-mount
           hostPath:
             path: {{ .Values.storage.build.hostPath }}
+        {{- end }}
