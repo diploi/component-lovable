@@ -19,3 +19,6 @@ environmentVariables:
 storage:
   - identifier: build
     sizeMiB: 8192
+    stages:
+      - staging
+      - production
