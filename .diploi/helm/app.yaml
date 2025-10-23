@@ -65,7 +65,7 @@ spec:
               else echo "Lockfile not found." && exit 1; \
               fi &&
               rm -rf /build/{*,.*} &&
-              (shopt -s dotglob; mv -v ./* /build) ||:
+              mv -v ./{*,.[!.]*} /build ||:
           volumeMounts:
             - name: build-mount
               mountPath: /build
