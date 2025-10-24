@@ -14,10 +14,11 @@ Will run `npm install` when component is first initialized, and `npm run dev` wh
 
 ### Production
 
-Will build a production ready image. Image runs `npm install` & `npm run build` when being created. The created `/dist` folder will be served as a static site with [nginx](https://nginx.org/).
+Will build a production ready image. Image runs `npm install` & `npm run build` in a GitHub action when being created, and `npm run build` again when being run. The second `npm run build` ensures that ENV values are applied correctly from the running deployment.
+The created `/dist` folder will be served as a static site with [serve](https://github.com/vercel/serve).
 
 ## Links
 
 - [React documentation](https://react.dev/)
 - [Vite documentation](https://vite.dev/)
-- [nginx documentation](https://nginx.org/)
+- [serve documentation](https://github.com/vercel/serve)
