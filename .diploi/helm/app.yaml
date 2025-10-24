@@ -82,7 +82,9 @@ spec:
               else echo "Lockfile not found." && exit 1; \
               fi &&
               find /build -mindepth 1 -exec rm -rf {} + &&
-              mv ./dist /build ||: &&
+              DEST=$(pwd | awk '{sub("/app","/build");print}') &&
+              mkdir -p $DEST &&
+              mv ./dist $DEST ||: &&
               chown -R 1000:1000 /build
           volumeMounts:
             - name: build-mount
