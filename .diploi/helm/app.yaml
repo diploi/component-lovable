@@ -43,8 +43,8 @@ spec:
             - -c
             - |
               if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-              elif [ -f package-lock.json ]; then npm ci || npm install; \
-              elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+              elif [ -f package-lock.json ]; then npm ci || npm i; \
+              elif [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile || pnpm i; \
               else echo "Lockfile not found. Skipping install."; \
               fi
           workingDir: /app{{ .Values.folder }}
@@ -78,7 +78,7 @@ spec:
             - |
               if [ -f yarn.lock ]; then yarn run build; \
               elif [ -f package-lock.json ]; then npm run build; \
-              elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+              elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
               else echo "Lockfile not found." && exit 1; \
               fi &&
               find /build -mindepth 1 -exec rm -rf {} + &&

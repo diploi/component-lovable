@@ -2,10 +2,18 @@
 ARG FOLDER=/app
 
 FROM node:24-slim AS base
-ARG FOLDER
+
+# Enable corepack
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+
+# Setup PNPM
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
 # Install dependencies only when needed
 FROM base AS deps
+ARG FOLDER
 
 COPY . /app
 WORKDIR ${FOLDER}
@@ -13,13 +21,14 @@ WORKDIR ${FOLDER}
 # Install dependencies based on the preferred package manager
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci || npm i; \
+  elif [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile || pnpm i; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
 # Rebuild the source code only when needed
 FROM base AS builder
+ARG FOLDER
 COPY . /app
 WORKDIR ${FOLDER}
 COPY --from=deps ${FOLDER}/node_modules ./node_modules
@@ -27,7 +36,7 @@ COPY --from=deps ${FOLDER}/node_modules ./node_modules
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
