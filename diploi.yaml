@@ -3,10 +3,12 @@ type: component
 name: Lovable
 description: Official Diploi component for Lovable apps
 
+supportsAdditionalHosts: { serviceName: 'app' }
+
 hosts:
   - name: App
     identifier: app
-    urlFormat: '[label].[default-domain]'
+    port: 80
 
 images:
   - identifier: app
