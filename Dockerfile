@@ -43,6 +43,7 @@ RUN \
 # Production image, copy all the built files
 # NOTE: Build will be run again in an init-container to include ENV
 FROM base AS runner
+ARG FOLDER
 
 COPY --from=builder --chown=1000:1000 /app /app
 WORKDIR ${FOLDER}
