@@ -76,10 +76,17 @@ spec:
             - /bin/sh
             - -c
             - |
-              if [ -f yarn.lock ]; then yarn run build; \
-              elif [ -f package-lock.json ]; then npm run build; \
-              elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
-              else echo "Lockfile not found." && exit 1; \
+              if [ -f yarn.lock ]; then
+                yarn --frozen-lockfile || yarn install
+              elif [ -f package-lock.json ]; then
+                npm ci || npm install
+              elif [ -f pnpm-lock.yaml ]; then
+                pnpm install --frozen-lockfile || pnpm install
+              elif [ -f package.json ]; then
+                echo "Lockfile not found. Falling back to npm install (non-deterministic install)."
+                npm install
+              else
+                echo "No package manifest found. Skipping install."
               fi &&
               find /build -mindepth 1 -exec rm -rf {} + &&
               DEST=$(pwd | awk '{sub("/app","/build");print}') &&
