@@ -43,7 +43,8 @@ RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
   elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
+  elif [ -f package.json ]; then npm run build; \
+  else echo "No package manifest found. Skipping build step."; \
   fi
 
 # Production image, copy all the built files
