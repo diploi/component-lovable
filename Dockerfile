@@ -20,12 +20,18 @@ WORKDIR ${FOLDER}
 
 # Install dependencies based on the preferred package manager
 RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci || npm i; \
-  elif [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile || pnpm i; \
-  else echo "Lockfile not found." && exit 1; \
+  if [ -f yarn.lock ]; then \
+  yarn install --frozen-lockfile || yarn install; \
+  elif [ -f package-lock.json ]; then \
+  npm ci || npm install; \
+  elif [ -f pnpm-lock.yaml ]; then \
+  pnpm install --frozen-lockfile || pnpm install; \
+  elif [ -f package.json ]; then \
+  echo "Lockfile not found. Falling back to npm install (non-deterministic install)."; \
+  npm install; \
+  else \
+  echo "No package manifest found. Skipping install."; \
   fi
-
 # Rebuild the source code only when needed
 FROM base AS builder
 ARG FOLDER
