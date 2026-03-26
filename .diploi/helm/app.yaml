@@ -112,11 +112,6 @@ spec:
           ports:
             - containerPort: 80
           {{- end }}
-          resources:
-            requests:
-              memory: 500Mi
-            limits:
-              memory: 1000Mi
           {{- if eq .Values.stage "development" }}
           workingDir: /app{{ .Values.folder }}
           {{- end }}
