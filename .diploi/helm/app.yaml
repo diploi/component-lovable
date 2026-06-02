@@ -80,7 +80,7 @@ spec:
             - -c
             - |
               set -eux; \
-                if grep -q '"@tanstack/react-start"' package.json >/dev/null 2>&1; then \
+                if grep -q '"@lovable.dev/vite-tanstack-config"' package.json || grep -q '"@tanstack/react-start"' package.json; then \
                   if grep -q '^[[:space:]]*nitro:' vite.config.ts; then \
                   cp vite.config.ts vite.node.config.ts; \
                   else \

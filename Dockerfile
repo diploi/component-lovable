@@ -45,7 +45,7 @@ COPY --from=deps ${FOLDER}/node_modules ./node_modules
 # Create a vite.node.config.ts with custom node-server preset and run the build with new config,
 # otherwise fall back to default build scripts.
 RUN set -eux; \
-  if grep -q '"@tanstack/react-start"' package.json >/dev/null 2>&1; then \
+  if grep -q '"@lovable.dev/vite-tanstack-config"' package.json || grep -q '"@tanstack/react-start"' package.json; then \
   if grep -q '^[[:space:]]*nitro:' vite.config.ts; then \
   cp vite.config.ts vite.node.config.ts; \
   else \
@@ -95,4 +95,14 @@ ENV HOSTNAME="0.0.0.0"
 ENV NITRO_PORT=80
 ENV NITRO_HOST="0.0.0.0"
 
-CMD ["sh", "-c", "if [ -f .output/server/index.mjs ]; then node .output/server/index.mjs; else serve -s -l ${PORT:-80} dist; fi"]
+CMD sh -c '\
+  if [ -f .output/server/index.mjs ]; then \
+  echo "Found .output/server/index.mjs — starting Node"; \
+  exec node .output/server/index.mjs; \
+  elif [ -f dist/server/index.mjs ]; then \
+  echo "Found dist/server/index.mjs — starting Node"; \
+  exec node dist/server/index.mjs; \
+  else \
+  echo "No server build found — serving static dist"; \
+  exec serve -s -l ${PORT:-80} dist; \
+  fi'
