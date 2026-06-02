@@ -34,6 +34,7 @@ RUN \
   else \
   echo "No package manifest found. Skipping install."; \
   fi
+
 # Rebuild the source code only when needed
 FROM base AS builder
 ARG FOLDER
@@ -41,15 +42,34 @@ COPY . /app
 WORKDIR ${FOLDER}
 COPY --from=deps ${FOLDER}/node_modules ./node_modules
 
-ENV LOVABLE_SANDBOX=1
-ENV NITRO_PRESET=node-server
-
-RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
-  elif [ -f package.json ]; then npm run build; \
-  else echo "No package manifest found. Skipping build step."; \
+# Create a vite.node.config.ts with custom node-server preset and run the build with new config,
+# otherwise fall back to default build scripts.
+RUN set -eux; \
+  if grep -q '"@tanstack/react-start"' package.json >/dev/null 2>&1; then \
+  if grep -q '^[[:space:]]*nitro:' vite.config.ts; then \
+  cp vite.config.ts vite.node.config.ts; \
+  else \
+  awk 'NR > 1 { print prev } { prev = $0 } END { if (prev == "});") { print "  nitro: { preset: \"node-server\" },"; print prev } else { print prev } }' vite.config.ts > vite.node.config.ts; \
+  echo "Custom vite.node.config.ts"; \
+  cat vite.node.config.ts; \
+  fi; \
+  echo "Building TanStack Start with custom vite.node.config.ts"; \
+  npm run build -- --config vite.node.config.ts; \
+  rm vite.node.config.ts; \
+  else \
+  echo "Fallback for old Lovable project"; \
+  if [ -f yarn.lock ]; then \
+  yarn run build; \
+  elif [ -f package-lock.json ]; then \
+  npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then \
+  pnpm run build; \
+  elif [ -f package.json ]; then \
+  echo "Lockfile not found. Falling back to npm."; \
+  npm run build; \
+  else \
+  echo "No package manifest found. Skipping build."; \
+  fi; \
   fi
 
 # Production image, copy all the built files
@@ -74,7 +94,5 @@ ENV HOST="0.0.0.0"
 ENV HOSTNAME="0.0.0.0"
 ENV NITRO_PORT=80
 ENV NITRO_HOST="0.0.0.0"
-ENV LOVABLE_SANDBOX=1
-ENV NITRO_PRESET=node-server
 
-CMD ["sh", "-c", "if [ -f dist/server/index.mjs ]; then node dist/server/index.mjs; else serve -s -l ${PORT:-80} dist; fi"]
+CMD ["sh", "-c", "if [ -f .output/server/index.mjs ]; then node .output/server/index.mjs; else serve -s -l ${PORT:-80} dist; fi"]

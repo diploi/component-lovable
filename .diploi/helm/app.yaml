@@ -79,19 +79,42 @@ spec:
             - /bin/sh
             - -c
             - |
-              if [ -f yarn.lock ]; then yarn run build; \
-              elif [ -f package-lock.json ]; then npm run build; \
-              elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
-              elif [ -f package.json ]; then
-                echo "Lockfile not found. Falling back to npm."
-                npm run build
-              else
-                echo "No package manifest found. Skipping build."
-              fi &&
+              set -eux; \
+                if grep -q '"@tanstack/react-start"' package.json >/dev/null 2>&1; then \
+                  if grep -q '^[[:space:]]*nitro:' vite.config.ts; then \
+                  cp vite.config.ts vite.node.config.ts; \
+                  else \
+                  awk 'NR > 1 { print prev } { prev = $0 } END { if (prev == "});") { print "  nitro: { preset: \"node-server\" },"; print prev } else { print prev } }' vite.config.ts > vite.node.config.ts; \
+                  echo "Custom vite.node.config.ts"
+                  cat vite.node.config.ts
+                  fi; \
+                  echo "Building TanStack Start with custom vite.node.config.ts"; \
+                  npm run build -- --config vite.node.config.ts; \
+                  rm vite.node.config.ts; \
+                else \
+                  echo "Fallback for old Lovable project"; \
+                  if [ -f yarn.lock ]; then \
+                    yarn run build; \
+                  elif [ -f package-lock.json ]; then \
+                    npm run build; \
+                  elif [ -f pnpm-lock.yaml ]; then \
+                    pnpm run build; \
+                  elif [ -f package.json ]; then \
+                    echo "Lockfile not found. Falling back to npm."; \
+                    npm run build; \
+                  else \
+                    echo "No package manifest found. Skipping build."; \
+                  fi; \
+                fi
+              
               find /build -mindepth 1 -exec rm -rf {} + &&
               DEST=$(pwd | awk '{sub("/app","/build");print}') &&
               mkdir -p $DEST &&
-              cp -rv ./dist $DEST ||: &&
+              if [ -d .output ]; then
+                cp -rv .output $DEST ||:
+              else
+                cp -rv ./dist $DEST ||:
+              fi &&
               chown -R 1000:1000 /build
           volumeMounts:
             - name: build-mount
