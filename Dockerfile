@@ -9,7 +9,9 @@ RUN corepack enable
 
 # Setup PNPM
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
+RUN mkdir -p /home/codespace/.pnpm-store /pnpm \
+  && chown -R 1000:1000 /home/codespace/.pnpm-store /pnpm
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -39,6 +41,9 @@ COPY . /app
 WORKDIR ${FOLDER}
 COPY --from=deps ${FOLDER}/node_modules ./node_modules
 
+ENV LOVABLE_SANDBOX=1
+ENV NITRO_PRESET=node-server
+
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
@@ -65,6 +70,11 @@ RUN npm i -g serve
 
 EXPOSE 80
 ENV PORT=80
+ENV HOST="0.0.0.0"
 ENV HOSTNAME="0.0.0.0"
+ENV NITRO_PORT=80
+ENV NITRO_HOST="0.0.0.0"
+ENV LOVABLE_SANDBOX=1
+ENV NITRO_PRESET=node-server
 
-CMD ["serve", "-s", "-l", "80", "dist"]
+CMD ["sh", "-c", "if [ -f dist/server/index.mjs ]; then node dist/server/index.mjs; else serve -s -l ${PORT:-80} dist; fi"]
