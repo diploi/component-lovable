@@ -99,11 +99,7 @@ spec:
               find /build -mindepth 1 -exec rm -rf {} + &&
               DEST=$(pwd | awk '{sub("/app","/build");print}') &&
               mkdir -p $DEST &&
-              if [ -d .output ]; then
-                cp -rv .output $DEST ||:
-              else
-                cp -rv ./dist $DEST ||:
-              fi &&
+              cp -rv ./dist $DEST ||: &&
               chown -R 1000:1000 /build
           volumeMounts:
             - name: build-mount
