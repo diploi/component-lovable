@@ -33,17 +33,4 @@ EXPOSE 8080
 ENV PORT=8080
 ENV HOSTNAME="0.0.0.0"
 
-CMD sh -c '\
-    if [ -f bun.lock ] || [ -f bun.lockb ]; then \
-    echo "Bun detected"; \
-    exec bun run dev -- --host; \
-    elif [ -f yarn.lock ]; then \
-    echo "Yarn detected"; \
-    exec yarn run dev -- --host; \
-    elif [ -f pnpm-lock.yaml ]; then \
-    echo "PNPM detected"; \
-    exec pnpm run dev -- --host; \
-    else \
-    echo "Fall back to NPM"; \
-    exec npm run dev -- --host; \
-    fi'
+CMD ["npm", "run", "dev", "--", "--host"]
