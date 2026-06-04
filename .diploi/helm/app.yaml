@@ -104,7 +104,6 @@ spec:
               else
                 cp -rv ./dist $DEST ||:
               fi &&
-              cp -r ./node_modules $DEST
               chown -R 1000:1000 /build
           volumeMounts:
             - name: build-mount
