@@ -13,6 +13,8 @@ ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN mkdir -p /home/codespace/.pnpm-store /pnpm \
   && chown -R 1000:1000 /home/codespace/.pnpm-store /pnpm
 
+COPY --from=oven/bun:1.3.11 /usr/local/bin/bun /usr/local/bin/bun
+
 # Install dependencies only when needed
 FROM base AS deps
 ARG FOLDER
@@ -22,18 +24,13 @@ WORKDIR ${FOLDER}
 
 # Install dependencies based on the preferred package manager
 RUN \
-  if [ -f yarn.lock ]; then \
-  yarn install --frozen-lockfile || yarn install; \
-  elif [ -f package-lock.json ]; then \
-  npm ci || npm install; \
-  elif [ -f pnpm-lock.yaml ]; then \
-  pnpm install --frozen-lockfile || pnpm install; \
-  elif [ -f package.json ]; then \
-  echo "Lockfile not found. Falling back to npm install (non-deterministic install)."; \
-  npm install; \
-  else \
-  echo "No package manifest found. Skipping install."; \
+  if [ -f bun.lockb ] || [ -f bun.lock ]; then bun install --frozen-lockfile || bun install; \
+  elif [ -f yarn.lock ]; then yarn install --frozen-lockfile || yarn install; \
+  elif [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile || pnpm i; \
+  elif [ -f package-lock.json ]; then npm ci || npm i; \
+  else echo "Lockfile not found." && exit 1; \
   fi
+
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -44,32 +41,12 @@ COPY --from=deps ${FOLDER}/node_modules ./node_modules
 
 # Create a vite.node.config.ts with custom node-server preset and run the build with new config,
 # otherwise fall back to default build scripts.
-RUN set -eux; \
-  if grep -q '"@lovable.dev/vite-tanstack-config"' package.json || grep -q '"@tanstack/react-start"' package.json; then \
-  if grep -q '^[[:space:]]*nitro:' vite.config.ts; then \
-  cp vite.config.ts vite.node.config.ts; \
-  else \
-  awk 'NR > 1 { print prev } { prev = $0 } END { if (prev == "});") { print "  nitro: { preset: \"node-server\" },"; print prev } else { print prev } }' vite.config.ts > vite.node.config.ts; \
-  echo "Custom vite.node.config.ts"; \
-  cat vite.node.config.ts; \
-  fi; \
-  echo "Building TanStack Start with custom vite.node.config.ts"; \
-  npm run build -- --config vite.node.config.ts; \
-  rm vite.node.config.ts; \
-  else \
-  echo "Fallback for old Lovable project"; \
-  if [ -f yarn.lock ]; then \
-  yarn run build; \
-  elif [ -f package-lock.json ]; then \
-  npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then \
-  pnpm run build; \
-  elif [ -f package.json ]; then \
-  echo "Lockfile not found. Falling back to npm."; \
-  npm run build; \
-  else \
-  echo "No package manifest found. Skipping build."; \
-  fi; \
+RUN \
+  if [ -f bun.lockb ] || [ -f bun.lock ]; then bun run build; \
+  elif [ -f yarn.lock ]; then yarn run build; \
+  elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
+  elif [ -f package-lock.json ]; then npm run build; \
+  else echo "Lockfile not found." && exit 1; \
   fi
 
 # Production image, copy all the built files
@@ -96,12 +73,9 @@ ENV NITRO_PORT=80
 ENV NITRO_HOST="0.0.0.0"
 
 CMD sh -c '\
-  if [ -f .output/server/index.mjs ]; then \
-  echo "Found .output/server/index.mjs — starting Node"; \
-  exec node .output/server/index.mjs; \
-  elif [ -f dist/server/index.mjs ]; then \
-  echo "Found dist/server/index.mjs — starting Node"; \
-  exec node dist/server/index.mjs; \
+  if [ -f dist/server ]; then \
+  echo "Found dist/server — starting Bun"; \
+  exec bun dist/server/server.js; \
   else \
   echo "No server build found — serving static dist"; \
   exec serve -s -l ${PORT:-80} dist; \

@@ -38,12 +38,14 @@ spec:
             - /bin/sh
             - -c
             - |
-              if [ -f yarn.lock ]; then
+              if [ -f bun.lockb ] || [ -f bun.lock ]; then 
+                bun install --frozen-lockfile || bun install
+              elif [ -f yarn.lock ]; then
                 yarn install --frozen-lockfile || yarn install
-              elif [ -f package-lock.json ]; then
-                npm ci || npm install
               elif [ -f pnpm-lock.yaml ]; then
                 pnpm install --frozen-lockfile || pnpm install
+              elif [ -f package-lock.json ]; then
+                npm ci || npm install
               elif [ -f package.json ]; then
                 echo "Lockfile not found. Falling back to npm install (non-deterministic install)."
                 npm install
@@ -79,33 +81,20 @@ spec:
             - /bin/sh
             - -c
             - |
-              set -eux; \
-                if grep -q '"@lovable.dev/vite-tanstack-config"' package.json || grep -q '"@tanstack/react-start"' package.json; then \
-                  if grep -q '^[[:space:]]*nitro:' vite.config.ts; then \
-                  cp vite.config.ts vite.node.config.ts; \
-                  else \
-                  awk 'NR > 1 { print prev } { prev = $0 } END { if (prev == "});") { print "  nitro: { preset: \"node-server\" },"; print prev } else { print prev } }' vite.config.ts > vite.node.config.ts; \
-                  echo "Custom vite.node.config.ts"
-                  cat vite.node.config.ts
-                  fi; \
-                  echo "Building TanStack Start with custom vite.node.config.ts"; \
-                  npm run build -- --config vite.node.config.ts; \
-                  rm vite.node.config.ts; \
-                else \
-                  echo "Fallback for old Lovable project"; \
-                  if [ -f yarn.lock ]; then \
-                    yarn run build; \
-                  elif [ -f package-lock.json ]; then \
-                    npm run build; \
-                  elif [ -f pnpm-lock.yaml ]; then \
-                    pnpm run build; \
-                  elif [ -f package.json ]; then \
-                    echo "Lockfile not found. Falling back to npm."; \
-                    npm run build; \
-                  else \
-                    echo "No package manifest found. Skipping build."; \
-                  fi; \
-                fi
+              if [ -f bun.lockb ] || [ -f bun.lock ]; then \
+                bun run build; \
+              elif [ -f yarn.lock ]; then \
+                yarn run build; \
+              elif [ -f pnpm-lock.yaml ]; then \
+                pnpm run build; \
+              elif [ -f package-lock.json ]; then \
+                npm run build; \
+              elif [ -f package.json ]; then \
+                echo "Lockfile not found. Falling back to npm."; \
+                npm run build; \
+              else \
+                echo "No package manifest found. Skipping build."; \
+              fi; \
               
               find /build -mindepth 1 -exec rm -rf {} + &&
               DEST=$(pwd | awk '{sub("/app","/build");print}') &&
@@ -115,6 +104,7 @@ spec:
               else
                 cp -rv ./dist $DEST ||:
               fi &&
+              cp -r ./node_modules $DEST
               chown -R 1000:1000 /build
           volumeMounts:
             - name: build-mount
@@ -150,6 +140,9 @@ spec:
             {{- if ne .Values.stage "development"}}
             - name: build-mount
               mountPath: /app
+            - name: server-config
+              mountPath: /app/server.ts
+              subPath: server.ts
             {{- end }}
         {{- if eq .Values.stage "development"}}
         - name: nginx
@@ -180,4 +173,8 @@ spec:
         - name: build-mount
           hostPath:
             path: {{ .Values.storage.build.hostPath }}
+        - name: server-config
+          configMap: 
+            name: tanstack-server
         {{- end }}
+
