@@ -3,8 +3,8 @@ kind: ConfigMap
 metadata:
   name: tanstack-server
 data:
-  server.ts: | 
-      /**
+  server.ts: |
+    /**
     * TanStack Start Production Server with Bun
     *
     * A high-performance production server for TanStack Start applications that

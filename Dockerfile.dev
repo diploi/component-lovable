@@ -13,7 +13,8 @@ ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN mkdir -p /home/codespace/.pnpm-store /pnpm \
     && chown -R 1000:1000 /home/codespace/.pnpm-store /pnpm
 
-COPY . /app
+COPY --from=oven/bun:1.3.11 /usr/local/bin/bun /usr/local/bin/bun
+
 WORKDIR ${FOLDER}
 
 ENV NODE_ENV=development
@@ -32,4 +33,17 @@ EXPOSE 8080
 ENV PORT=8080
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD sh -c '\
+    if [ -f bun.lock ] || [ -f bun.lockb ]; then \
+    echo "Bun detected"; \
+    exec bun run dev -- --host; \
+    elif [ -f yarn.lock ]; then \
+    echo "Yarn detected"; \
+    exec yarn run dev -- --host; \
+    elif [ -f pnpm-lock.yaml ]; then \
+    echo "PNPM detected"; \
+    exec pnpm run dev -- --host; \
+    else \
+    echo "Fall back to NPM"; \
+    exec npm run dev -- --host; \
+    fi'

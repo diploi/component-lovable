@@ -31,7 +31,6 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-
 # Rebuild the source code only when needed
 FROM base AS builder
 ARG FOLDER
@@ -39,8 +38,6 @@ COPY . /app
 WORKDIR ${FOLDER}
 COPY --from=deps ${FOLDER}/node_modules ./node_modules
 
-# Create a vite.node.config.ts with custom node-server preset and run the build with new config,
-# otherwise fall back to default build scripts.
 RUN \
   if [ -f bun.lockb ] || [ -f bun.lock ]; then bun run build; \
   elif [ -f yarn.lock ]; then yarn run build; \
@@ -73,10 +70,10 @@ ENV NITRO_PORT=80
 ENV NITRO_HOST="0.0.0.0"
 
 CMD sh -c '\
-  if [ -f dist/server ]; then \
-  echo "Found dist/server — starting Bun"; \
-  exec bun dist/server/server.js; \
+  if [ -d dist/server ] && [ -f server.ts ]; then \
+  echo "Found server.ts —> starting Bun"; \
+  exec bun run server.ts; \
   else \
-  echo "No server build found — serving static dist"; \
+  echo "No server build found —> serving static dist"; \
   exec serve -s -l ${PORT:-80} dist; \
   fi'
